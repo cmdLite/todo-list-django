@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-p67qzlcm%68evo$x8id49=a-esykj!mbm2n#dakv37!h)c&ktq
 # SECURITY WARNING: don't run with debug turned on in production!
 
 DEBUG = False  # Disable debug mode
-ALLOWED_HOSTS = ["simple-todo-app-django.vercel.app"]  # Allow all hosts for testing (use a proper domain later)
+ALLOWED_HOSTS = ["*"]  # Allow all hosts for testing (use a proper domain later)
 
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
