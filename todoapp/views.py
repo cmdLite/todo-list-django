@@ -73,7 +73,7 @@ class AISuggestView(View):
     POST { "prompt": "..." }
     Returns { "suggestions": ["task 1", "task 2", ...] }
 
-    Uses the Google Gemini API (gemini-2.0-flash).
+    Uses the Google Gemini API (gemini-1.5-flash).
     Set GEMINI_API_KEY in your environment or .env file.
     """
 
@@ -95,7 +95,7 @@ class AISuggestView(View):
             )
 
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
         system_prompt = (
             "You are a productivity assistant. "
