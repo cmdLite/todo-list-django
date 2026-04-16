@@ -19,12 +19,18 @@ from .forms import TaskForm
 # ---------------------------------------------------------------------------
 
 class TaskListView(SuccessMessageMixin, ListView):
-    """Displays the full task list and handles creating new tasks via POST."""
+    """Displays the visitor's task list and handles creating new tasks."""
 
     model = Task
     template_name = "task_list.html"
     context_object_name = "tasks"
     ordering = ["-created_at"]
+
+    def get_queryset(self):
+        # Ensure session exists
+        if not self.request.session.session_key:
+            self.request.session.create()
+        return Task.objects.filter(session_id=self.request.session.session_key).order_by("-created_at")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -32,9 +38,15 @@ class TaskListView(SuccessMessageMixin, ListView):
         return context
 
     def post(self, request, *args, **kwargs):
+        # Ensure session exists
+        if not request.session.session_key:
+            request.session.create()
+            
         form = TaskForm(request.POST)
         if form.is_valid():
-            form.save()
+            task = form.save(commit=False)
+            task.session_id = request.session.session_key
+            task.save()
         return self.get(request, *args, **kwargs)
 
 
@@ -42,10 +54,14 @@ class TaskToggleView(View):
     """Handles toggling a task's completed state via POST."""
 
     def post(self, request, pk):
-        task = Task.objects.get(pk=pk)
-        # If a hidden field sends the OLD value, flip it; otherwise read the checkbox.
-        task.completed = request.POST.get("completed") == "on"
-        task.save()
+        # Only allow toggling if it belongs to this session
+        try:
+            task = Task.objects.get(pk=pk, session_id=request.session.session_key)
+            task.completed = request.POST.get("completed") == "on"
+            task.save()
+        except Task.DoesNotExist:
+            pass
+            
         from django.shortcuts import redirect
         return redirect("task-list")
 
@@ -57,11 +73,17 @@ class TaskUpdateView(SuccessMessageMixin, UpdateView):
     success_url = reverse_lazy("task-list")
     success_message = "Task updated successfully."
 
+    def get_queryset(self):
+        return Task.objects.filter(session_id=self.request.session.session_key)
+
 
 class TaskDeleteView(DeleteView):
     model = Task
     template_name = "task_delete.html"
     success_url = reverse_lazy("task-list")
+
+    def get_queryset(self):
+        return Task.objects.filter(session_id=self.request.session.session_key)
 
 
 # ---------------------------------------------------------------------------
