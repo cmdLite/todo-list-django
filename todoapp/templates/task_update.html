@@ -1,0 +1,14 @@
+{% extends "base.html" %} 
+{% block content %}
+<div class="todo-container">
+  <h2>Update Task</h2>
+  <form action="" method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="btn-container">
+      <button type="submit" class="btn-cancel" style="background-color: #a459f4; color: white;">Save Changes</button>
+      <a href="{% url 'task-list' %}" class="btn-cancel" style="background-color: grey; color: white; text-align: center; display: inline-block; text-decoration: none; line-height: 50px;">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

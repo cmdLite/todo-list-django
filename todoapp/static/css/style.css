@@ -170,3 +170,8 @@ select:focus {
   cursor: pointer;
   margin-left: 10px;
 }
+
+.task.completed {
+  text-decoration: line-through;
+  color: gray;
+}
