@@ -3,8 +3,17 @@
     {
       "src": "new_todo/wsgi.py",
       "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.11.9" }
+      "config": { "maxLambdaSize": "15mb", "runtime": "python3.11" }
     }
   ],
-  "routes": [{ "src": "/(.*)", "dest": "new_todo/wsgi.py" }]
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "new_todo/wsgi.py"
+    }
+  ]
 }

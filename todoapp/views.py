@@ -73,7 +73,7 @@ class AISuggestView(View):
     POST { "prompt": "..." }
     Returns { "suggestions": ["task 1", "task 2", ...] }
 
-    Uses the Google Gemini API (gemini-1.5-flash).
+    Uses the Google Gemini API (gemini-2.5-flash).
     Set GEMINI_API_KEY in your environment or .env file.
     """
 
@@ -95,7 +95,7 @@ class AISuggestView(View):
             )
 
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         system_prompt = (
             "You are a productivity assistant. "
@@ -105,14 +105,21 @@ class AISuggestView(View):
             'Example: ["Task A", "Task B", "Task C", "Task D", "Task E"]'
         )
 
-        try:
-            response = model.generate_content(f"{system_prompt}\n\nUser goal: {user_prompt}")
-            raw = response.text.strip()
-            # Safely parse the returned JSON array
-            suggestions = json.loads(raw)
-            if not isinstance(suggestions, list):
-                raise ValueError("Expected a JSON array.")
-        except Exception as exc:
-            return JsonResponse({"error": f"AI error: {str(exc)}"}, status=500)
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = model.generate_content(f"{system_prompt}\n\nUser goal: {user_prompt}")
+                raw = response.text.strip()
+                # Safely parse the returned JSON array
+                suggestions = json.loads(raw)
+                if not isinstance(suggestions, list):
+                    raise ValueError("Expected a JSON array.")
+                break # Success!
+            except Exception as exc:
+                if "429" in str(exc) and attempt < max_retries - 1:
+                    time.sleep(2) # Wait 2 seconds and retry
+                    continue
+                return JsonResponse({"error": f"AI error: {str(exc)}"}, status=500)
 
         return JsonResponse({"suggestions": suggestions})
