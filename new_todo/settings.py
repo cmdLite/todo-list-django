@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,14 +28,13 @@ SECRET_KEY = 'django-insecure-p67qzlcm%68evo$x8id49=a-esykj!mbm2n#dakv37!h)c&ktq
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = False  # Disable debug mode
-ALLOWED_HOSTS = ["*"]  # Allow all hosts for testing (use a proper domain later)
+DEBUG = True
+ALLOWED_HOSTS = ["*"]
 
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
-
-STATIC_DIRS = [os.path.join(BASE_DIR,"new_todo/static")]
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_DIRS = []
 
 
 
@@ -148,10 +151,7 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
-STATIC_URL = 'static/'
+# Default primary key field type
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

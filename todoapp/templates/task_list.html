@@ -1,71 +1,51 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} 
 
-<div class="todo-container" style="width: 500px">
-  <div class="todo-search" style="height: auto; padding: 20px 10px">
-    <form action="" method="POST" style="flex-wrap: wrap">
+{% block content %}
+<h1>Todo AI</h1>
+
+<div class="todo-container">
+  <!-- Input Section -->
+  <div class="todo-search">
+    <form action="" method="POST">
       {% csrf_token %}
-      <div style="width: 100%; display: flex; justify-content: space-between">
-        {{ form.title }}
-        <button type="submit">Add</button>
-      </div>
+      {{ form.title }}
+      <button type="submit">
+        <i class="fa-solid fa-plus me-2"></i> Add
+      </button>
     </form>
 
-    <!-- AI Suggestion feature -->
-    <div
-      style="
-        width: 100%;
-        margin-top: 15px;
-        border-top: 1px solid #eee;
-        padding-top: 15px;
-      "
-    >
-      <p style="font-size: 14px; margin-bottom: 5px; color: #555">
-        <i>Ask AI to suggest tasks:</i>
+    <!-- AI Suggestion Section -->
+    <div class="ai-section">
+      <p>
+        <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Ask AI to suggest tasks
       </p>
-      <div style="display: flex; gap: 10px">
+      <div class="ai-input-group">
         <input
           type="text"
           id="ai-prompt"
-          placeholder="e.g. Plan a birthday party"
+          placeholder="e.g. Plan a weekend trip..."
           class="myinput"
-          style="height: 40px; font-size: 14px; font-style: italic"
         />
-        <button
-          type="button"
-          id="ai-btn"
-          style="
-            height: 40px;
-            width: 80px;
-            background-color: #a459f4;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-          "
-        >
+        <button type="button" id="ai-btn">
           Suggest
         </button>
       </div>
-      <div
-        id="ai-results"
-        style="margin-top: 10px; font-size: 14px; color: #333; display: none"
-      >
-        <p><b>Suggestions:</b></p>
-        <ul id="ai-list" style="list-style-type: disc; padding-left: 20px"></ul>
+      
+      <div id="ai-results" style="display: none">
+        <ul id="ai-list"></ul>
       </div>
     </div>
   </div>
 
+  <!-- Task List Section -->
   <div class="todo-list">
     {% for task in tasks %}
     <div class="todo-list-item">
-      <div class="task">
+      <div class="task-content">
         <form
           action="{% url 'task-toggle' task.id %}"
           method="POST"
           class="toggle-form"
-          style="display: inline"
         >
           {% csrf_token %}
           <input type="hidden" name="completed" value="{{ task.completed }}" />
@@ -73,51 +53,44 @@
             type="checkbox"
             name="completed"
             onchange="this.form.submit()"
-            {%
-            if
-            task.completed
-            %}checked{%
-            endif
-            %}
+            {% if task.completed %}checked{% endif %}
           />
-          <span class="task {% if task.completed %}completed{% endif %}">
-            {{ task.title }}
-          </span>
         </form>
+        <span class="task-title {% if task.completed %}completed{% endif %}">
+          {{ task.title }}
+        </span>
       </div>
 
       <div class="btn-container">
-        <div class="edit">
-          <a href="{% url 'task-update' task.id %}">
-            <i class="fa-solid fa-pen-to-square"></i>
-          </a>
-        </div>
-        <div class="del">
-          <a href="{% url 'task-delete' task.id %}">
-            <i class="fa-solid fa-trash-can"></i>
-          </a>
-        </div>
+        <a href="{% url 'task-update' task.id %}" class="edit-btn" title="Edit Task">
+          <i class="fa-solid fa-pen"></i>
+        </a>
+        <a href="{% url 'task-delete' task.id %}" class="del-btn" title="Delete Task">
+          <i class="fa-solid fa-trash"></i>
+        </a>
       </div>
     </div>
-    {% endfor %} {% if not tasks %}
-    <p style="text-align: center; color: gray; margin-top: 20px">
-      No tasks available.
-    </p>
-    {% endif %}
+    {% empty %}
+    <div class="empty-state">
+      <i class="fa-solid fa-clipboard-check fa-3x mb-3" style="opacity: 0.2"></i>
+      <p>No tasks available. Start by adding one!</p>
+    </div>
+    {% endfor %}
   </div>
 </div>
 
 <script>
   document.getElementById("ai-btn").addEventListener("click", async () => {
-    const prompt = document.getElementById("ai-prompt").value;
+    const promptInput = document.getElementById("ai-prompt");
+    const prompt = promptInput.value.trim();
     if (!prompt) return;
 
     const btn = document.getElementById("ai-btn");
+    const originalText = btn.innerHTML;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
     btn.disabled = true;
 
     try {
-      // Must include CSRF token for Django POST requests via ajax
       const csrf = document.querySelector("[name=csrfmiddlewaretoken]").value;
       const res = await fetch("{% url 'ai-suggest' %}", {
         method: "POST",
@@ -136,14 +109,13 @@
         list.innerHTML = "";
         data.suggestions.forEach((item) => {
           const li = document.createElement("li");
-          li.style.cursor = "pointer";
-          li.style.color = "#a459f4";
-          li.style.textDecoration = "underline";
-          li.style.marginBottom = "5px";
           li.textContent = item;
-          // Clicking a suggestion fills it into the main form
           li.onclick = () => {
-            document.querySelector('input[name="title"]').value = item;
+            const mainInput = document.querySelector('input[name="title"]');
+            mainInput.value = item;
+            mainInput.focus();
+            // Scroll to main input if needed
+            mainInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
           };
           list.appendChild(li);
         });
@@ -151,10 +123,16 @@
       }
     } catch (e) {
       alert("Error contacting AI server.");
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
     }
+  });
 
-    btn.innerHTML = "Suggest";
-    btn.disabled = false;
+  // Simple animation for list items when added
+  document.querySelectorAll('.todo-list-item').forEach((item, index) => {
+    item.style.animation = `fadeIn 0.4s ease-out forwards ${index * 0.05}s`;
+    item.style.opacity = 0;
   });
 </script>
 
